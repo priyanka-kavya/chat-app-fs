@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Application</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        h2 {
+            font-size: 20px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        input[type="text"],
+        input[type="password"],
+        select {
+            width: 100%;
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+        
+        button {
+            background-color: #007bff;
+            color: #fff;
+            padding: 5px 10px;
+            border: none;
+            cursor: pointer;
+        }
+        
+        #authentication,
+        #user-management,
+        #group-management,
+        #group-messaging {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        
+        #chat {
+            border: 1px solid #ccc;
+            padding: 10px;
+            height: 200px;
+            overflow-y: scroll;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome to the Chat Application</h1>
+
+    <!-- Authentication Section -->
+    <h2>Authentication</h2>
+    <div id="authentication">
+        <div>
+            <label for="login-username">Username:</label>
+            <input type="text" id="login-username">
+            <label for="login-password">Password:</label>
+            <input type="password" id="login-password">
+            <button onclick="login()">Login</button>
+        </div>
+        <div>
+            <label for="register-username">Username:</label>
+            <input type="text" id="register-username">
+            <label for="register-password">Password:</label>
+            <input type="password" id="register-password">
+            <button onclick="register()">Register</button>
+        </div>
+        <button onclick="logout()">Logout</button>
+    </div>
+
+    <!-- User Management Section (Admin Only) -->
+    <h2>User Management (Admin Only)</h2>
+    <div id="user-management">
+        <label for="create-username">Create User:</label>
+        <input type="text" id="create-username">
+        <label for="create-password">Password:</label>
+        <input type="password" id="create-password">
+        <button onclick="createUser()">Create</button>
+        <label for="edit-username">Edit User:</label>
+        <input type="text" id="edit-username">
+        <label for="edit-password">New Password:</label>
+        <input type="password" id="edit-password">
+        <button onclick="editUser()">Edit</button>
+    </div>
+
+    <!-- Group Management Section -->
+    <h2>Group Management</h2>
+    <div id="group-management">
+        <label for="create-group">Create Group:</label>
+        <input type="text" id="create-group">
+        <button onclick="createGroup()">Create</button>
+        <label for="delete-group">Delete Group:</label>
+        <input type="text" id="delete-group">
+        <button onclick="deleteGroup()">Delete</button>
+    </div>
+
+    <!-- Group Messaging Section -->
+    <h2>Group Messaging</h2>
+    <div id="group-messaging">
+        <label for="group">Select Group:</label>
+        <select id="group">
+            <!-- Group names will be populated here -->
+        </select>
+        <label for="message">Message:</label>
+        <input type="text" id="message">
+        <button onclick="sendMessage()">Send</button>
+        <div id="chat">
+            <!-- Chat messages will be displayed here -->
+        </div>
+    </div>
+
+    <!-- Socket.io Script -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+
+    <script>
+        const socket = io.connect('http://localhost:5000');
+
+        // Function to create a group
+        function createGroup() {
+            const groupName = document.getElementById('create-group').value;
+            // Send a create group request to the server
+            socket.emit('create_group', { groupName });
+        }
+
+        // Function to delete a group
+        function deleteGroup() {
+            const groupName = document.getElementById('delete-group').value;
+            // Send a delete group request to the server
+            socket.emit('delete_group', { groupName });
+        }
+
+        // Function to add a user to a group
+        function addUserToGroup() {
+            const groupName = document.getElementById('group').value;
+            const username = document.getElementById('add-user').value;
+            // Send an add user request to the server
+            socket.emit('add_user_to_group', { groupName, username });
+        }
+
+        // Function to remove a user from a group
+        function removeUserFromGroup() {
+            const groupName = document.getElementById('group').value;
+            const username = document.getElementById('remove-user').value;
+            // Send a remove user request to the server
+            socket.emit('remove_user_from_group', { groupName, username });
+        }
+
+        // Function to send a group message
+        function sendMessage() {
+            const groupName = document.getElementById('group').value;
+            const message = document.getElementById('message').value;
+            // Send a message to the selected group
+            socket.emit('send_group_message', { groupName, message });
+        }
+
+        // Event handler for receiving messages
+        socket.on('message', (data) => {
+            const chat = document.getElementById('chat');
+            chat.innerHTML += data + '<br>';
+        });
+
+        // Populate the group selection dropdown with available groups
+        socket.on('available_groups', (data) => {
+            const groupDropdown = document.getElementById('group');
+            groupDropdown.innerHTML = ''; // Clear existing options
+            data.groups.forEach((group) => {
+                const option = document.createElement('option');
+                option.value = group;
+                option.textContent = group;
+                groupDropdown.appendChild(option);
+            });
+        });
+    </script>
+</body>
+
+</html>
